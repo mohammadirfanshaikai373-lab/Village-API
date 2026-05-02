@@ -33,10 +33,11 @@ export const GET = async (req: Request) => {
 export const POST = async (req: Request) => {
   const res = await (handlers as any).POST(req);
 
-  // 🎯 Force all successful login redirects to the frontend portal
+  // Force successful login redirects to the frontend portal
   if (res.status === 302) {
     const newHeaders = new Headers(res.headers);
-    newHeaders.set("Location", "http://localhost:5173/portal");
+    // Use the same ORIGIN variable (which comes from FRONTEND_URL env)
+    newHeaders.set("Location", `${ORIGIN}/portal`);
     return new Response(res.body, {
       status: 302,
       statusText: res.statusText,
