@@ -10,7 +10,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const { email, password } = credentials as {
@@ -29,11 +29,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: String(user.id),
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
         };
-      }
-    })
+      },
+    }),
   ],
+  trustHost: true, // ✅ required for Render / production domains
   callbacks: {
     jwt({ token, user }) {
       if (user) {
@@ -50,14 +51,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // ✅ Hardcoded – always send to Vite portal
-      if (url.startsWith('/')) {
-        return 'http://localhost:5173/portal';
+      // Use the environment variable (works on both localhost and Render)
+      const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
+      const PORTAL = `${FRONTEND}/portal`;
+
+      if (url.startsWith("/")) {
+        return PORTAL;
       }
-      // Allow absolute backend URLs (e.g. for sign-out)
+      // Allow absolute backend URLs (e.g. for sign‑out)
       if (url.startsWith(baseUrl)) return url;
       // Fallback
-      return 'http://localhost:5173/portal';
-    }
-  }
+      return PORTAL;
+    },
+  },
 });
