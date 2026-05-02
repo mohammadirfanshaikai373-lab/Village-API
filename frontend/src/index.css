@@ -1,0 +1,200 @@
+@import "tw-animate-css";
+/*@import "shadcn/tailwind.css";*/
+@import "@fontsource-variable/geist";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light mode color palette (default) */
+:root {
+  --color-primary: #0F3D3E;
+  --color-accent: #D94F4F;
+  --color-teal: #14B8A6;
+  --color-coral: #F97316;
+  --color-ink: #1E1E2F;
+  --color-cream: #FDFBF7;
+  --color-faded: #6B7280;
+  --color-ash: #9CA3AF;
+  --color-rule: #E5E7EB;
+  --color-card: #FFFFFF;
+  --color-parchment: #FAF7F0;
+  --color-void: #0D0D1A;
+}
+
+/* Dark mode overrides – applied when <html class="dark"> */
+html.dark {
+  --color-card: #1E1E2F;
+  --color-parchment: #0D0D1A;
+  --color-rule: #2D2D3A;
+  --color-ink: #FDFBF7;
+  --color-faded: #9CA3AF;
+  --color-ash: #6B7280;
+  --color-primary: #14B8A6;
+  --color-accent: #F97316;
+}
+
+/* Base body backgrounds */
+html:not(.dark) body {
+  background-color: var(--color-parchment);
+  color: var(--color-ink);
+}
+html.dark body {
+  background-color: var(--color-void);
+  color: var(--color-ink);
+}
+
+/* ========== CUSTOM UTILITY CLASSES ========== */
+.bg-card { background-color: var(--color-card); }
+.bg-parchment { background-color: var(--color-parchment); }
+.bg-void { background-color: var(--color-void); }
+.text-ink { color: var(--color-ink); }
+.text-cream { color: var(--color-cream); }
+.text-faded { color: var(--color-faded); }
+.text-ash { color: var(--color-ash); }
+.border-rule { border-color: var(--color-rule); }
+
+/* ========== OVERRIDE TAILWIND DEFAULT CLASSES FOR DARK MODE ========== */
+html.dark .bg-white,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-gray-200 {
+  background-color: var(--color-card) !important;
+}
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: var(--color-rule) !important;
+}
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-gray-700 {
+  color: var(--color-ink) !important;
+}
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: var(--color-ash) !important;
+}
+html.dark .shadow,
+html.dark .shadow-lg {
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.3) !important;
+}
+
+/* ========== FIX HEADER / NAVBAR ========== */
+html.dark header,
+html.dark .header,
+html.dark .navbar,
+html.dark [role="banner"],
+html.dark .sticky,
+html.dark .fixed {
+  background-color: var(--color-card) !important;
+  border-bottom-color: var(--color-rule) !important;
+}
+html.dark .border-b {
+  border-bottom-color: var(--color-rule) !important;
+}
+
+/* ========== FIX LOGIN CARD AND MODALS ========== */
+html.dark .bg-card,
+html.dark .bg-white {
+  background-color: var(--color-card) !important;
+}
+html.dark .bg-parchment {
+  background-color: var(--color-parchment) !important;
+}
+html.dark .bg-void {
+  background-color: var(--color-void) !important;
+}
+
+/* ========== FORM INPUTS ========== */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #2D2D3A;
+  border-color: var(--color-rule);
+  color: var(--color-ink);
+}
+html.dark input::placeholder {
+  color: var(--color-ash);
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+  }
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
