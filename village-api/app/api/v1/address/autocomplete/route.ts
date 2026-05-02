@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { withApiAuth, ApiAuthContext } from '@/lib/api-auth';
 
-// ---------- CORS helpers (exactly like the ones we used in user‑profile) ----------
-const ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-function corsHeaders(): Headers {
+// ---------- Dynamic CORS helper ----------
+function corsHeaders(req: NextRequest): Headers {
+  const origin = req.headers.get('origin') || '*';
   const headers = new Headers();
-  headers.set('Access-Control-Allow-Origin', ORIGIN);
+  headers.set('Access-Control-Allow-Origin', origin);
   headers.set('Access-Control-Allow-Credentials', 'true');
   headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
   headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -16,23 +15,24 @@ function corsHeaders(): Headers {
   return headers;
 }
 
-function addCorsHeaders(response: NextResponse): NextResponse {
-  corsHeaders().forEach((value, key) => response.headers.set(key, value));
+function addCorsHeaders(response: NextResponse, req: NextRequest): NextResponse {
+  corsHeaders(req).forEach((value, key) => response.headers.set(key, value));
   return response;
 }
 
 // ---------- OPTIONS handler for CORS preflight ----------
-export async function OPTIONS() {
+export async function OPTIONS(req: NextRequest) {
   return addCorsHeaders(
-    new NextResponse(null, { status: 204, headers: corsHeaders() })
+    new NextResponse(null, { status: 204 }),
+    req
   );
 }
 
-// ---------- Existing GET handler (unchanged except for CORS wrapping) ----------
+// ---------- GET handler (with dynamic CORS) ----------
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (request, context) => {
     const result = await handleAutocomplete(request, context);
-    return addCorsHeaders(result);
+    return addCorsHeaders(result, req);
   });
 }
 
@@ -41,13 +41,14 @@ async function handleAutocomplete(req: NextRequest, context: ApiAuthContext) {
 
   if (!q || q.trim().length < 2) {
     return addCorsHeaders(
-      NextResponse.json({ error: 'Query must be at least 2 characters' }, { status: 400 })
+      NextResponse.json({ error: 'Query must be at least 2 characters' }, { status: 400 }),
+      req
     );
   }
 
   const clean = q.trim().replace(/[^a-zA-Z0-9\s]/g, '');
   if (!clean) {
-    return addCorsHeaders(NextResponse.json([], { status: 200 }));
+    return addCorsHeaders(NextResponse.json([], { status: 200 }), req);
   }
 
   const tsquery = clean
@@ -79,11 +80,12 @@ async function handleAutocomplete(req: NextRequest, context: ApiAuthContext) {
       country: 'India'
     }));
 
-    return addCorsHeaders(NextResponse.json(suggestions));
+    return addCorsHeaders(NextResponse.json(suggestions), req);
   } catch (error) {
     console.error('Autocomplete error:', error);
     return addCorsHeaders(
-      NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      NextResponse.json({ error: 'Internal server error' }, { status: 500 }),
+      req
     );
   }
 }

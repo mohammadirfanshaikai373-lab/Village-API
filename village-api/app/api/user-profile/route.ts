@@ -3,39 +3,33 @@ import { auth } from '@/auth';
 import pool from '@/lib/db';
 
 // ---------------------------------------------------------------------------
-// CORS helper – same as for the auth routes
+// Dynamic CORS helper – reads origin from request so any Vercel URL works
 // ---------------------------------------------------------------------------
-const ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-function corsHeaders(): Headers {
+function corsHeaders(req: NextRequest): Headers {
+  const origin = req.headers.get('origin') || '*';
   const headers = new Headers();
-  headers.set('Access-Control-Allow-Origin', ORIGIN);
+  headers.set('Access-Control-Allow-Origin', origin);
   headers.set('Access-Control-Allow-Credentials', 'true');
   headers.set('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
-  headers.set(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization'
-  );
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   headers.set('Access-Control-Max-Age', '86400');
   return headers;
 }
 
-function addCorsHeaders(response: NextResponse): NextResponse {
-  corsHeaders().forEach((value, key) => response.headers.set(key, value));
+function addCorsHeaders(response: NextResponse, req: NextRequest): NextResponse {
+  corsHeaders(req).forEach((value, key) => response.headers.set(key, value));
   return response;
 }
 
 // ---------------------------------------------------------------------------
 // OPTIONS – preflight
 // ---------------------------------------------------------------------------
-export async function OPTIONS() {
-  return addCorsHeaders(
-    new NextResponse(null, { status: 204, headers: corsHeaders() })
-  );
+export async function OPTIONS(req: NextRequest) {
+  return addCorsHeaders(new NextResponse(null, { status: 204 }), req);
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/user-profile (existing logic, only CORS added)
+// GET /api/user-profile
 // ---------------------------------------------------------------------------
 export async function GET(req: NextRequest) {
   try {
@@ -43,7 +37,8 @@ export async function GET(req: NextRequest) {
 
     if (!session?.user) {
       return addCorsHeaders(
-        NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+        req
       );
     }
 
@@ -66,7 +61,8 @@ export async function GET(req: NextRequest) {
 
     if (result.rows.length === 0) {
       return addCorsHeaders(
-        NextResponse.json({ error: 'User not found' }, { status: 404 })
+        NextResponse.json({ error: 'User not found' }, { status: 404 }),
+        req
       );
     }
 
@@ -80,7 +76,8 @@ export async function GET(req: NextRequest) {
         role: user.role,
         created_at: user.created_at,
         api_keys: user.api_keys || [],
-      })
+      }),
+      req
     );
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -88,13 +85,14 @@ export async function GET(req: NextRequest) {
       NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
-      )
+      ),
+      req
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// PUT /api/user-profile (existing logic, CORS added)
+// PUT /api/user-profile
 // ---------------------------------------------------------------------------
 export async function PUT(req: NextRequest) {
   try {
@@ -102,7 +100,8 @@ export async function PUT(req: NextRequest) {
 
     if (!session?.user) {
       return addCorsHeaders(
-        NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+        req
       );
     }
 
@@ -116,20 +115,20 @@ export async function PUT(req: NextRequest) {
 
     if (result.rows.length === 0) {
       return addCorsHeaders(
-        NextResponse.json({ error: 'User not found' }, { status: 404 })
+        NextResponse.json({ error: 'User not found' }, { status: 404 }),
+        req
       );
     }
 
-    return addCorsHeaders(
-      NextResponse.json(result.rows[0])
-    );
+    return addCorsHeaders(NextResponse.json(result.rows[0]), req);
   } catch (error) {
     console.error('Profile update error:', error);
     return addCorsHeaders(
       NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
-      )
+      ),
+      req
     );
   }
 }
