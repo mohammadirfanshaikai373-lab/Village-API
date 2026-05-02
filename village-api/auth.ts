@@ -34,7 +34,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  trustHost: true, // ✅ required for Render / production domains
+  trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+        path: "/",
+      },
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) {
@@ -51,16 +62,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Use the environment variable (works on both localhost and Render)
       const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
       const PORTAL = `${FRONTEND}/portal`;
 
       if (url.startsWith("/")) {
         return PORTAL;
       }
-      // Allow absolute backend URLs (e.g. for sign‑out)
       if (url.startsWith(baseUrl)) return url;
-      // Fallback
       return PORTAL;
     },
   },
