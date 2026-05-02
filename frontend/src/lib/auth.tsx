@@ -37,11 +37,18 @@ const Ctx = createContext<AuthCtx>({
 
 export const useAuth = () => useContext(Ctx);
 
-// 👇 Change this to match your backend API prefix
+// Environment detection
+const isProduction = import.meta.env.PROD;
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000/api';
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
-// Helper: fetch JSON safely, returns null if not JSON (e.g. HTML)
+// Use relative paths in production (proxied by Vercel)
+const sessionPath = isProduction ? '/api/auth/session' : `${BACKEND_URL}/auth/session`;
+const profilePath = isProduction ? '/api/user-profile' : `${BACKEND_URL}/user-profile`;
+const csrfPath = isProduction ? '/api/auth/csrf' : `${BACKEND_URL}/auth/csrf`;
+const callbackPath = isProduction ? '/api/auth/callback/credentials' : `${BACKEND_URL}/auth/callback/credentials`;
+
+// Helper: fetch JSON safely
 async function safeFetchJson(url: string, options?: RequestInit) {
   const res = await fetch(url, { credentials: 'include', ...options });
   const contentType = res.headers.get('content-type');
@@ -53,10 +60,34 @@ async function safeFetchJson(url: string, options?: RequestInit) {
   return null;
 }
 
-// Fetch CSRF token from NextAuth
+// Fetch CSRF token
 async function fetchCsrfToken(): Promise<string> {
-  const data = await safeFetchJson(`${BACKEND_URL}/auth/csrf`);
+  const data = await safeFetchJson(csrfPath);
   return data?.csrfToken || '';
+}
+
+// Hidden form sign‑in (no CORS issues)
+function submitLoginForm(email: string, password: string, csrfToken: string) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = callbackPath;
+  form.style.display = 'none';
+
+  const addField = (name: string, value: string) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  };
+
+  addField('email', email);
+  addField('password', password);
+  addField('csrfToken', csrfToken);
+  addField('callbackUrl', '/portal');   // relative – backend redirect callback will handle it
+
+  document.body.appendChild(form);
+  form.submit();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -66,9 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId?: string) => {
     try {
-      const url = userId
-        ? `${BACKEND_URL}/user-profile?uid=${userId}`
-        : `${BACKEND_URL}/user-profile`;
+      const url = userId ? `${profilePath}?uid=${userId}` : profilePath;
       const data = await safeFetchJson(url);
       if (data && !data.error) setProfile(data);
     } catch (err) {
@@ -78,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchSession = async () => {
     try {
-      const data = await safeFetchJson(`${BACKEND_URL}/auth/session`);
+      const data = await safeFetchJson(sessionPath);
       if (data?.user) {
         setUser(data.user);
         await fetchProfile(data.user.id);
@@ -102,28 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const csrfToken = await fetchCsrfToken();
-      const res = await fetch(`${BACKEND_URL}/auth/callback/credentials`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        // 🔑 This is the magic – tell NextAuth to NOT redirect
-        body: JSON.stringify({ email, password, csrfToken, redirect: false }),
-      });
-
-      // NextAuth should return JSON (because of redirect: false)
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || data?.error) {
-        return { error: data?.error || `Sign in failed (${res.status})` };
-      }
-
-      // Refresh our session (ignore errors – we still want to redirect)
-      try {
-        await fetchSession();
-      } catch {}
-
-      // ✅ Redirect to the frontend portal
-      return { error: null, redirectTo: '/portal' };
+      submitLoginForm(email, password, csrfToken);
+      // Page will navigate away – no need to return anything
+      return { error: null };
     } catch (err: any) {
       return { error: err.message || 'Sign in failed' };
     }
@@ -143,12 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: data?.error || `Sign up failed (${res.status})` };
       }
 
-      // Auto‑login after registration
-      const loginResult = await signIn(email, password);
-      if (loginResult.error) {
-        return { error: `Registered but sign in failed: ${loginResult.error}` };
-      }
-
+      // Auto‑login via hidden form
+      await signIn(email, password);
       return { error: null, redirectTo: '/portal' };
     } catch (err: any) {
       return { error: err.message || 'Sign up failed' };
