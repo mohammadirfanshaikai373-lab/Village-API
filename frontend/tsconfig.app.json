@@ -14,7 +14,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/lib/client.ts",
+    "src/lib/middleware.ts",
+    "src/lib/server.ts"
+  ]
 }
