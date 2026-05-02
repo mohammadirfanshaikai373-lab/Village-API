@@ -1,10 +1,10 @@
 import { handlers } from "@/auth";
 
-const ORIGIN = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 function corsHeaders(): Headers {
   const headers = new Headers();
-  headers.set("Access-Control-Allow-Origin", ORIGIN);
+  headers.set("Access-Control-Allow-Origin", FRONTEND_URL);
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   headers.set(
@@ -33,11 +33,10 @@ export const GET = async (req: Request) => {
 export const POST = async (req: Request) => {
   const res = await (handlers as any).POST(req);
 
-  // Force successful login redirects to the frontend portal
+  // ⚡ Force redirect to the frontend portal on successful login
   if (res.status === 302) {
     const newHeaders = new Headers(res.headers);
-    // Use the same ORIGIN variable (which comes from FRONTEND_URL env)
-    newHeaders.set("Location", `${ORIGIN}/portal`);
+    newHeaders.set("Location", `${FRONTEND_URL}/portal`);
     return new Response(res.body, {
       status: 302,
       statusText: res.statusText,
